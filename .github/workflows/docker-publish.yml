@@ -26,5 +26,5 @@ jobs:
         with:
         context: . 
         dockerfile: ./backend/Dockerfile
-          push: true
-          tags: carowithoute1110/my-backend:latest
+        push: true
+        tags: carowithoute1110/my-backend:latest
