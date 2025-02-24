@@ -31,18 +31,30 @@ jobs:
         with: 
           python-version: "3.10"
 
+      - name: Überprüfe Python-Installation
+        run: |
+          python --version
+          pip --version
+
       - name: Abhängigkeiten installieren
         run: |
           python -m venv venv
+          ls -l venv/bin/   # Debugging: Zeigt, ob die virtuelle Umgebung richtig erstellt wurde
           source venv/bin/activate
           pip install -r backend/requirements.txt
-
+          
       - name: Backend testen
         env: 
           DATABASE_URL: postgresql://test_user:test_password@localhost/test_db
         run: |
+          set -x   # Debugging: Zeigt alle ausgeführten Befehle
           source venv/bin/activate
-          pytest backend/tests
+          pytest backend/tests --maxfail=1 --disable-warnings -q
+
+      - name: Docker Version überprüfen
+        run: |
+          docker --version
+          docker info
 
       - name: Login bei DockerHub
         run: |
@@ -51,10 +63,11 @@ jobs:
       - name: Docker Image bauen und pushen
         if: success()
         run: |
+          set -x   # Debugging: Zeigt alle ausgeführten Befehle
           docker build -t my-backend .
           docker tag my-backend ${{ secrets.DOCKER_USERNAME }}/my-backend:latest
           docker push ${{ secrets.DOCKER_USERNAME }}/my-backend:latest
 
       - name: Tests durchführen
         run: |
-          pytest backend/tests
+          pytest backend/tests --maxfail=1 --disable-warnings -q
