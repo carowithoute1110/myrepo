@@ -28,3 +28,6 @@ jobs:
           dockerfile: ./backend/Dockerfile
           push: true
           tags: carowithoute/myrepo:latest
+      - name: Tests durchführen
+        run: |
+         pytest backend/tests
