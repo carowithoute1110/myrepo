@@ -1,0 +1,51 @@
+name: React Frontend CI/CD
+
+on: 
+  push:
+    branches: 
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs: 
+  build-test-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Code aus repo holen
+        uses: action/checkout@v3
+      - name: Node.js installieren
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+
+      - name: Abhängigkeiten installieren
+        run: |
+          cd frontend
+          npm install
+
+      - name: Linter und tests durchführen
+        run: |
+          cd frontend
+          npm run lint
+          npm test
+
+      - name: Frontend bauen
+        run: |
+          cd frontend
+          npm run build
+      
+      - name: Login bei DockerHub
+        run: |
+        echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: Image bauen und pushen
+        run: |
+          docker build -t CaroWithoutE/myrepo-frontend:latest ./frontend
+          docker push CaroWithoutE/myrepo-frontend:latest
+
+      - name: Auf Vercel deployen
+        if: success()
+        run: |
+          npm install -g vercel vercel --prod --token ${{secrets.VERCEL_TOKEN}}

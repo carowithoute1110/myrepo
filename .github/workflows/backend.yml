@@ -1,0 +1,45 @@
+name: Mayflower Kicker Backend CI/CD
+
+on: 
+  push: 
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-test-deploy:
+    runs-on: ubuntu-latest
+
+    services: 
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: 
+          POSTGRES_PASSWORD:
+          POSTGRES_DB:
+          ports: 
+            -5432:5432
+
+    steps:
+      -name: Code aus Repository holen
+       uses: actions/checkout@v3
+      -name: Python installieren
+       uses: actions/setup-python@v4
+       with: 
+        python-version: "3.10"
+
+      -name: Abhängigkeiten hinzufügen
+       run: | python -m venv venv source venv/bin/activate pip install -r backend/requirements.txt
+      -name: Backend testen
+       env: DATABASE-URL: postgresql://test_user:test_password@localhost/test_db
+       run: | source venv/bin/activate pytest backend/tests
+      -name: Login bei Dockerhub
+       run: |
+        echo "$ {{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+      -name: Docker Image bauen und pushen
+        if: success()
+        run: | 
+         docker build -t my-backend . echo "$ {{secrets.DOCKER_PASSWORD}}" | docker login -u "${{secrets.DOCKER_USERNAME }} --password-stdin
+         docker tag my-backend myrepo/my-backend:latest docker push myrepo/my-backend:latest
