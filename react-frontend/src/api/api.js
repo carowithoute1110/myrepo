@@ -5,6 +5,11 @@ export async function getPlayers() {
     return response.json();
 }
 
+export async function getPlayer(id) {
+    const response = await fetch(`${API_URL}/players/${id}`);
+    return response.json();
+}
+
 export async function addPlayer(name, location) {
     await fetch(`${API_URL}/players/`, { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify( {name, location})});
 }
@@ -22,7 +27,25 @@ export async function getMatches() {
     return response.json();
 }
 
-export async function addMatch(date_time, location, mode, team1_player1, team1_player2, team2_player1, team2_player2) {
-    const response = await fetch(`${API_URL}/matches/`, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify( {date_time, location, mode, team1_player1, team1_player2, team2_player1, team2_player2})});
+export async function addMatch(matchData) {
+    console.log("addMatch: ", matchData);
+    const response = await fetch(`${API_URL}/matches/`, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(matchData)});
     return response.json();
 } 
+
+export async function deleteMatch(id) {
+    await fetch(`${API_URL}/matches/${id}`, {method: "DELETE"});
+}
+
+export async function getGames() {
+    const response = await fetch(`${API_URL}/games`);
+    return response.json();
+}
+
+export async function addGame(gameData) {
+    const response = await fetch(`${API_URL}/games/`, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(gameData)});
+    return response.json();
+} 
+
+
+
