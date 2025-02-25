@@ -17,13 +17,13 @@ def get_player_statistics(player_id: int, db: Session = Depends(get_db)) -> Dict
         "locations": {}
     }
     games = db.query(Game, Match.location).join(Match).filter(
-        (Game.team1_front_id == player_id) | (Game.team1_back_id == player_id) |
-        (Game.team2_front_id == player_id) | (Game.team2_back_id == player_id)
+        (Game.team1_front == player_id) | (Game.team1_back == player_id) |
+        (Game.team2_front == player_id) | (Game.team2_back == player_id)
     ).all()
 
     for game, location in games:
-        player_team = 1 if player_id in [game.team1_front_id, game.team1_back_id] else 2
-        player_position = "front" if player_id in [game.team1_front_id, game.team2_front_id] else "back"
+        player_team = 1 if player_id in [game.team1_front, game.team1_back] else 2
+        player_position = "front" if player_id in [game.team1_front, game.team2_front] else "back"
 
         team1_won = game.team1_score > game.team2_score
         player_won = (player_team == 1 and team1_won) or (player_team == 2 and not team1_won)
@@ -54,9 +54,9 @@ def get_global_rankings(db: Session = Depends(get_db)) -> Dict:
 
     player_stats = db.query(
         Player.id, Player.name,
-        func.count().filter(Game.team1_score > Game.team2_score, (Game.team1_front_id == Player.id) | (Game.team1_back_id == Player.id)).label("wins_as_team1"),
-        func.count().filter(Game.team2_score > Game.team1_score, (Game.team2_front_id == Player.id) | (Game.team2_back_id == Player.id)).label("wins_as_team2")
-    ).join(Game, (Player.id == Game.team1_front_id) | (Player.id == Game.team1_back_id) | (Player.id == Game.team2_front_id) | (Player.id == Game.team2_back_id))\
+        func.count().filter(Game.team1_score > Game.team2_score, (Game.team1_front == Player.id) | (Game.team1_back == Player.id)).label("wins_as_team1"),
+        func.count().filter(Game.team2_score > Game.team1_score, (Game.team2_front == Player.id) | (Game.team2_back == Player.id)).label("wins_as_team2")
+    ).join(Game, (Player.id == Game.team1_front) | (Player.id == Game.team1_back) | (Player.id == Game.team2_front) | (Player.id == Game.team2_back))\
     .group_by(Player.id, Player.name).all()
 
     for player_id, name, wins_as_team1, wins_as_team2 in player_stats:
@@ -66,7 +66,7 @@ def get_global_rankings(db: Session = Depends(get_db)) -> Dict:
     for position in ["front", "back"]:
         position_wins = db.query(
             Player.id, Player.name, func.count(Game.id)
-        ).join(Game, (Game.team1_front_id == Player.id) if position == "front" else (Game.team1_back_id == Player.id))\
+        ).join(Game, (Game.team1_front == Player.id) if position == "front" else (Game.team1_back == Player.id))\
         .filter(Game.team1_score > Game.team2_score)\
         .group_by(Player.id, Player.name)\
         .order_by(func.count(Game.id).desc())\
@@ -78,7 +78,7 @@ def get_global_rankings(db: Session = Depends(get_db)) -> Dict:
     location_wins = db.query(
         Match.location, Player.id, Player.name, func.count(Game.id)
     ).join(Game, Game.match_id == Match.id)\
-    .join(Player, (Game.team1_front_id == Player.id) | (Game.team1_back_id == Player.id) | (Game.team2_front_id == Player.id) | (Game.team2_back_id == Player.id))\
+    .join(Player, (Game.team1_front == Player.id) | (Game.team1_back == Player.id) | (Game.team2_front == Player.id) | (Game.team2_back == Player.id))\
     .filter(Game.team1_score > Game.team2_score)\
     .group_by(Match.location, Player.id, Player.name)\
     .order_by(Match.location, func.count(Game.id).desc())\
